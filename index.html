@@ -1,0 +1,239 @@
+<!--
+Copyright 2018 The Distill Template Authors
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!doctype html>
+<head>
+    <script src="./template.v2.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf8">
+</head>
+
+<body>
+    <!-- <distill-header></distill-header> -->
+    <d-front-matter>
+    <script id='distill-front-matter' type="text/json">
+    {
+        "title": "Word Sense Disambiguation: An Introduction",
+        "description": "We take a look at the Lesk and Extended Lesk algorithms for the task of word sense disambiguation.",
+        "published": "Nov 23, 2019",
+        "authors": [{
+            "author": "Kishen Gowda",
+            "authorURL": "http://kishen19.github.io/",
+            "affiliations": [{
+            "name": "IIT Gandhinagar",
+            "url": "https://iitgn.ac.in/"
+            }]
+        },
+        {
+            "author": "Vraj Patel",
+            "authorURL": "https://github.com/alphatron1999",
+            "affiliations": [{
+            "name": "IIT Gandhinagar",
+            "url": "https://iitgn.ac.in/"
+            }]
+        }
+        ],
+        "katex": {
+            "delimiters": [{
+            "left": "$$",
+            "right": "$$",
+            "display": false
+            }]
+        }
+    }
+
+    </script>
+</d-front-matter>
+<d-title>
+    <p>A look at the Lesk and Extended Lesk Algorithms</p>
+</d-title>
+<d-byline></d-byline>
+<d-article>
+    <h2>Introduction</h2>
+    <p> "I like bass." &thinsp;&mdash;&thinsp; What does this sentence mean? If you are a music lover, then the first idea
+        that must've struck you is the musical instrument "bass" 🎸. But foodies immediately imagine a fish &#128031;
+    </p>
+    <p>Words can have multiple senses. The right sense is generally derived from the context of the sentence. So how do you 
+        disambiguate between multiple senses? This is the very task of <i>Word Sense Disambiguation</i>. This topic has been under active
+        research since 1940s when the idea of machine translation was proposed. One of the earliest and simplest algorithm proposed 
+        to tackle this problem was the <i>Lesk Algorithm</i>.
+    </p>
+    <h2>The Lesk Algorithm</h2>
+    <p>
+       The Lesk Algorithm is a classical dictionary and thesaurus based word sense disambiguation algorithm proposed in the 1986 
+       by Michael Lesk in the aptly titled paper "Automatic sense disambiguation using machine readable dictionaries: how 
+       to tell a pine cone from an ice cream cone"<d-cite key="Lesk:1986:ASD:318723.318728"></d-cite>. The intuition behind this method 
+       is that the sense of a word can be determined by its maximum coherence with the senses of the words in its context. We use the 
+       following two terms commonly: Target Word - Word whose sense is to be disambiguated, Context Word - word in the same sentence which 
+       contributes to the sense of the sentence. <i>Stop words</i> generally do not contribute to the sense of the sentence, so they can be removed.
+       Basically, the algorithm can be described in three steps:
+       <ol>
+           <li>Find all sense definitions of the words to be disambiguated.</li>
+           <li>For every combination of senses of these words, find the number of words overlapping in the dictionary definitions
+             of the context words with that of the target word.
+            </li>
+           <li>Choose the sense which has maximum overlap.</li>
+       </ol>
+    </p>
+    <figure class="base-grid">
+      <figcaption style="grid-column: kicker;">The classic <b>Pine</b> and <b>Cone</b> example.</figcaption>
+      <div style="display: grid; grid-column-start: 4; grid-column-end: 10; grid-gap: inherit;">
+        <div style="display:block">  
+          <b>PINE</b>
+          <ol>
+            <li>kinds of evergreen tree with needle-shaped leaves</li>
+            <li>waste away through sorrow or illness</li>
+          </ol>
+          <b>CONE</b>
+          <ol>
+            <li>solid body which narrows to a point</li>
+            <li>something of this shape whether solid or hollow</li>
+            <li>fruit of certain evergreen trees</li>
+          </ol>
+        </div>
+      </div>
+      <div style="display: grid; grid-column-start: 10; grid-column-end: 14; grid-gap: inherit;">
+        <div style="display:block">  
+          The overlaps are:
+          <ul>
+              <li>PINE#$$1$$ $$\cap$$ CONE#$$1$$ $$= 0$$ </li>
+              <li>PINE#$$2$$ $$\cap$$ CONE#$$1$$ $$= 0$$ </li>
+              <li>PINE#$$1$$ $$\cap$$ CONE#$$2$$ $$= 1$$ </li>
+              <li>PINE#$$2$$ $$\cap$$ CONE#$$2$$ $$= 0$$ </li>
+              <li>PINE#$$1$$ $$\cap$$ CONE#$$3$$ $$= 2$$ </li>
+              <li>PINE#$$2$$ $$\cap$$ CONE#$$3$$ $$= 0$$ </li>
+          </ul>
+        </div>   
+      </div>
+    </figure>
+    <p>
+      Let us see an implementation of the Lesk algorithm.
+    </p>
+    <d-code block language="python">
+      # Python 3: The Lesk Algorithm
+      from pywsd.lesk import original_lesk
+      sent = 'I went to the bank to deposit my money'
+      ambiguous = 'bank'
+      answer = original_lesk(sent, ambiguous)
+      print(answer)
+      print(answer.definition())
+    </d-code>
+    <h3>But what if we had more than two words?</h3>
+    <blockquote>I saw a man who is 98 years old and can still walk and tell jokes</blockquote>
+    <p>This sentence has around $$43,929,600$$ sense combinations!&#128552; How do you find the optimal sense combinations in such cases?</p>
+    <h2>Simplified Lesk Algorithm</h2>
+    <p>
+      The Simplified Lesk Algorithm <d-cite key="kilgarriff2000english"></d-cite>, as the name suggests, is a simplified version of the Lesk algorithm where we choose the sense of the 
+      target word which has maximum number of words overlapping with the set of context words. This actually simplifies the task as we don't 
+      need to search through all the combinations of senses of the context words. &#128524;
+    </p>
+    <span class="marker">Example</span>
+    <div style="font-size: 1rem;">
+      <p> Let us disambiguate the word <i>bank</i> in the following sentence:</p>
+      <blockquote>All his deposits are safe in the bank.</blockquote>
+      <p>The two available senses for <i>bank</i> are:
+        <ol>
+          <li>sloping land (especially the slope beside a body of water)</li>
+          <li>a financial institution that accepts deposits and channels the
+              money into lending activities</li>
+        </ol>
+      </p>
+      <p>
+        Here, the context words are {all, his, deposits, are, safe, in}. 
+        <ul>
+          <li>Sense #1 $$\cap$$ Context words = {}</li>
+          <li>Sense #2 $$\cap$$ Context words = {deposits}</li>
+        </ul>
+        Therefore, <i>Sense #2</i> is the correct sense.
+      </p>
+    </div>
+    <p>
+      Let us see an implementation of the Simplified Lesk algorithm.
+    </p>
+    <d-code block language="python">
+        # Python 3: Simplified Lesk Algorithm
+        from pywsd.lesk import simple_lesk
+        sent = 'I went to the bank to deposit my money'
+        ambiguous = 'bank'
+        answer = simple_lesk(sent, ambiguous)
+        print(answer)
+        print(answer.definition())
+    </d-code>
+    <h2>Extended Lesk Algorithm</h2>
+    <p>The Adapted/Extended Lesk Algorithm was proposed in 2002 and used WordNet for word sense disambiguation. Wordnet is a lexicon which 
+      is arranged semantically rather than alphabetical order. Synonymous words are grouped together to form synonym sets, or <i>synsets</i>
+      <d-cite key="Banerjee:2002:ALA:647344.724142"></d-cite><d-cite key="Miller:1995:WLD:219717.219748"></d-cite>. Each of the synsets has 
+      an associated gloss i.e. a short description of what sense do all words in the synset possess. Each synset has an associated unique 
+      reference identifier called the <i>sense-tag</i> which can be used to refer to a synset. For a word $$W_i$$ the no. of synsets are $$|W_i|$$. 
+      WordNet also provides the semantic relations between different senses. The Extended Lesk Algorithm manages to make use of all this 
+      information in WordNet.
+    </p>
+    <p>
+      The Extended Lesk algorithm defines <i>context</i> slightly differently than that given in the Lesk algorithm. Here, context of a target word 
+      is defined by a <i>window</i> of $$n$$ WordNet tokens to the left as well as to the right of the target word. A total of $$2n+1$$ words 
+      (including the target word) are chosen as the context words. If the word is at the beginning or the end of the sentence, then choose 
+      more words from the other direction. Basically, we try to make the number of context words same for all target words. 
+    </p>
+    <p>
+      The Extended Lesk can be described in 4 phases:
+      <ul>
+        <li><b>Input:</b> Provide a sentence and a target word whose sense is to be found.</li>
+        <li><b>Fetch Combination:</b> Find all possible combinations of the senses of the context words.</li>
+        <li><b>Calculate:</b> Calculate the score of the combination (see below) </li>
+        <li><b>Output:</b> Choose the sense of the target word which corresponds to the maximum score of a combination. </li>
+      </ul>
+      Note that in this process other words in the context are also assigned sense-tags, but it is just considered as a side-effect of the 
+      algorithm and are not use dcfor evaluation.
+    </p>
+    <h3>Score of a Combination</h3>
+    <p>
+      Score of a Combination = Sum of scores of overlaps of glosses of context words with the target word.<br>
+      Score of an overlap -> Calculated by finding the $$n$$-gram overlap between the two glosses, where $$n$$ is varied from the sentence 
+      length to $$1$$ in decreasing order. Also, once a word is counted towards a particular $$n$$-gram match, it is not supposed to be reused. 
+      Also, the contribution of an $$n$$-gram match is $$n^2$$ to the final score.
+    </p>
+    <p>
+        Let us see an implementation of the Extended Lesk algorithm.
+    </p>
+    <d-code block language="python">
+        # Python 3: Extended Lesk Algorithm
+        from pywsd.lesk import adapted_lesk
+        sent = 'I went to the bank to deposit my money'
+        ambiguous = 'bank'
+        answer = adapted_lesk(sent, ambiguous)
+        print(answer)
+        print(answer.definition())
+    </d-code>
+
+    <h2> Conclusion</h2>
+    <p>
+      Many Supervised, Unsupervised as well as Semi-Supervised learning based algorithms have been proposed for the task of <i>Word Sense Disambiguation</i> 
+      But the simplicity involved in Lesk and Extended-Lesk algorithms, which are Dictionary and Knowledge based, as well as their performance and accuracy 
+      make them a suitable choice in many problems. &#128526;
+    </p>
+</d-article>
+
+<d-appendix>
+<h3>Requirements</h3>
+<p>For running the codes given above, you have to run the following commands:<br>
+  <d-code block language="python">
+    pip install nltk
+    python -m nltk.downloader "popular"
+    pip install pywsd
+  </d-code>
+</p>
+<d-bibliography src="bibliography.bib"></d-bibliography>
+</d-appendix>
+
+<!-- <distill-footer></distill-footer> -->
+
+</body>
